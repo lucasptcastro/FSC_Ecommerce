@@ -1,7 +1,7 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import SignInForm from "./_components/sign-in-form";
-import SignUpForm from "./_components/sign-up-form";
+import { SignUpForm } from "./_components/sign-up-form";
 
 const Authentication = async () => {
   return (
