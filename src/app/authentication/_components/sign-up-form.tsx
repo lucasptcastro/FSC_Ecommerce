@@ -73,8 +73,9 @@ export function SignUpForm() {
             if (error.error.code === "USER_ALREADY_EXISTS") {
               toast.error("E-mail já cadastrado.");
 
-              form.setError("email", { message: "E-mail já cadastrado." }); // Seta o erro no campo de e-mail no formulário
-              return;
+              return form.setError("email", {
+                message: "E-mail já cadastrado.",
+              }); // Seta o erro no campo de e-mail no formulário
             }
 
             toast.error(
