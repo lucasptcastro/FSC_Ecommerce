@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -117,7 +118,13 @@ export function SignInForm() {
               />
             </CardContent>
             <CardFooter>
-              <Button type="submit">Entrar</Button>
+              <Button type="submit">
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Entrar"
+                )}
+              </Button>
             </CardFooter>
           </form>
         </Form>

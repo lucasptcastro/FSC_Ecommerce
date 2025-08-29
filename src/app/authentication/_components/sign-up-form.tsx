@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -162,7 +163,13 @@ export function SignUpForm() {
               />
             </CardContent>
             <CardFooter>
-              <Button type="submit">Criar conta</Button>
+              <Button type="submit">
+                {form.formState.isSubmitting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  "Criar conta"
+                )}
+              </Button>
             </CardFooter>
           </form>
         </Form>
