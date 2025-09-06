@@ -5,6 +5,7 @@
 ### Next
 
 - No arquivo "src\components\common\product-item.tsx" há algumas dicas sobre como fazer com que uma imagem ocupe 100% da largura
+- É interessante sempre preservar que um componente seja server component ao precisar escolher entre client component e server component para evitar hydration
 
 ### ShadCN
 
