@@ -72,6 +72,37 @@ export const productVariantRelations = relations(
   }),
 );
 
+export const shippingAddressTable = pgTable("shipping_address", {
+  id: uuid().primaryKey().defaultRandom(),
+  recipientName: text().notNull(),
+  street: text().notNull(),
+  number: text().notNull(),
+  complement: text(),
+  city: text().notNull(),
+  state: text().notNull(),
+  neighborhood: text().notNull(),
+  zipCode: text().notNull(),
+  country: text().notNull(),
+  phone: text().notNull(),
+  email: text().notNull(),
+  cpfOrCnpj: text().notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }), // referência ao usuário dono do endereço
+});
+
+export const shippingAddressRelations = relations(
+  shippingAddressTable,
+  ({ one }) => ({
+    user: one(userTable, {
+      fields: [shippingAddressTable.userId], // o campo userId referencia o id do usuário da tabela de usuários
+      references: [userTable.id],
+    }),
+  }),
+);
+
 // ----------- Better Auth tables
 
 export const userTable = pgTable("user", {
@@ -133,3 +164,7 @@ export const verificationTable = pgTable("verification", {
     () => /* @__PURE__ */ new Date(),
   ),
 });
+
+export const userRelations = relations(userTable, ({ many }) => ({
+  shippingAddresses: many(shippingAddressTable), // um usuário pode ter vários endereços de entrega
+}));
