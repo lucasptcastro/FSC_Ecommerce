@@ -10,16 +10,16 @@ import {
 
 // a convenção sql para nomear colunas/tabelas sugere usar snake_case
 
+/* -------------------------------------------------------------------------- */
+/*                                   Tables                                   */
+/* -------------------------------------------------------------------------- */
+
 export const categoryTable = pgTable("category", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
   slug: text().notNull().unique(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
-
-export const categoryRelations = relations(categoryTable, ({ many }) => ({
-  products: many(productTable), // uma categoria pode ter vários produtos
-}));
 
 export const productTable = pgTable("product", {
   id: uuid().primaryKey().defaultRandom(),
@@ -35,17 +35,6 @@ export const productTable = pgTable("product", {
     .references(() => categoryTable.id, { onDelete: "set null" }), // se a categoria for deletada, a categoria do produto será setada como null
 });
 
-export const productRelations = relations(productTable, ({ one, many }) => ({
-  // um produto pertence a uma categoria
-  category: one(categoryTable, {
-    fields: [productTable.categoryId], // o campo categoryId referencia o id da categoria (valor do references)
-    references: [categoryTable.id],
-  }),
-
-  // um produto pode ter várias variantes
-  variants: many(productVariantTable),
-}));
-
 export const productVariantTable = pgTable("product_variant", {
   id: uuid().primaryKey().defaultRandom(),
   name: text().notNull(),
@@ -60,17 +49,6 @@ export const productVariantTable = pgTable("product_variant", {
     .notNull()
     .references(() => productTable.id, { onDelete: "cascade" }), // se o produto for deletado, as variantes também serão
 });
-
-export const productVariantRelations = relations(
-  productVariantTable,
-  ({ one }) => ({
-    // uma variante de produto pertence a um produto
-    product: one(productTable, {
-      fields: [productVariantTable.productId],
-      references: [productTable.id],
-    }),
-  }),
-);
 
 export const shippingAddressTable = pgTable("shipping_address", {
   id: uuid().primaryKey().defaultRandom(),
@@ -93,6 +71,64 @@ export const shippingAddressTable = pgTable("shipping_address", {
     .references(() => userTable.id, { onDelete: "cascade" }), // referência ao usuário dono do endereço
 });
 
+export const cartTable = pgTable("cart", {
+  id: uuid().primaryKey().defaultRandom(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+
+  userId: text("user_id")
+    .notNull()
+    .references(() => userTable.id, { onDelete: "cascade" }), // referência ao usuário dono do carrinho
+  shippingAddressId: uuid("shipping_address_id").references(
+    () => shippingAddressTable.id,
+    {
+      onDelete: "set null",
+    },
+  ), // referência ao endereço de entrega selecionado
+});
+
+export const cartItemTable = pgTable("cart_item", {
+  id: uuid().primaryKey().defaultRandom(),
+  quantity: integer("quantity").notNull().default(1),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+
+  cartId: uuid("cart_id")
+    .notNull()
+    .references(() => cartTable.id, { onDelete: "cascade" }), // se o carrinho for deletado, os itens também serão
+  productVariantId: uuid("product_variant_id")
+    .notNull()
+    .references(() => productVariantTable.id, { onDelete: "cascade" }), // se a variante for deletada, o item do carrinho também será
+});
+
+/* -------------------------------- Relations ------------------------------- */
+
+export const categoryRelations = relations(categoryTable, ({ many }) => ({
+  products: many(productTable), // uma categoria pode ter vários produtos
+}));
+
+export const productRelations = relations(productTable, ({ one, many }) => ({
+  // um produto pertence a uma categoria
+  category: one(categoryTable, {
+    fields: [productTable.categoryId], // o campo categoryId referencia o id da categoria (valor do references)
+    references: [categoryTable.id],
+  }),
+
+  // um produto pode ter várias variantes
+  variants: many(productVariantTable),
+}));
+
+export const productVariantRelations = relations(
+  productVariantTable,
+  ({ one }) => ({
+    // uma variante de produto pertence a um produto
+    product: one(productTable, {
+      fields: [productVariantTable.productId],
+      references: [productTable.id],
+    }),
+  }),
+);
+
 export const shippingAddressRelations = relations(
   shippingAddressTable,
   ({ one }) => ({
@@ -100,10 +136,39 @@ export const shippingAddressRelations = relations(
       fields: [shippingAddressTable.userId], // o campo userId referencia o id do usuário da tabela de usuários
       references: [userTable.id],
     }),
+    cart: one(cartTable, {
+      fields: [shippingAddressTable.id],
+      references: [cartTable.shippingAddressId],
+    }),
   }),
 );
 
-// ----------- Better Auth tables
+export const cartRelations = relations(cartTable, ({ one, many }) => ({
+  user: one(userTable, {
+    fields: [cartTable.userId],
+    references: [userTable.id],
+  }),
+  shippingAddress: one(shippingAddressTable, {
+    fields: [cartTable.shippingAddressId],
+    references: [shippingAddressTable.id],
+  }),
+  items: many(cartItemTable), // um carrinho pode ter vários itens
+}));
+
+export const cartItemRelations = relations(cartItemTable, ({ one }) => ({
+  cart: one(cartTable, {
+    fields: [cartItemTable.cartId],
+    references: [cartTable.id],
+  }),
+  productVariant: one(productVariantTable, {
+    fields: [cartItemTable.productVariantId],
+    references: [productVariantTable.id],
+  }),
+}));
+
+/* -------------------------------------------------------------------------- */
+/*                             Better Auth tables                             */
+/* -------------------------------------------------------------------------- */
 
 export const userTable = pgTable("user", {
   id: text("id").primaryKey(),
@@ -165,6 +230,12 @@ export const verificationTable = pgTable("verification", {
   ),
 });
 
-export const userRelations = relations(userTable, ({ many }) => ({
+/* -------------------------------- Relations ------------------------------- */
+
+export const userRelations = relations(userTable, ({ many, one }) => ({
   shippingAddresses: many(shippingAddressTable), // um usuário pode ter vários endereços de entrega
+  cart: one(cartTable, {
+    fields: [userTable.id],
+    references: [cartTable.userId],
+  }), // um usuário tem apenas um carrinho
 }));

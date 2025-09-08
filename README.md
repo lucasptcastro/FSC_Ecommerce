@@ -2,6 +2,8 @@
 
 ---
 
+O projeto trata-se de um e-commerce de roupas e acessórios. A ideia é que o carrinho não seja armazenado no frontend via estados locais, mas sim no banco de dados para que o usuário consiga acessá-lo a partir de qualquer dispositivo
+
 ### Next
 
 - No arquivo "src\components\common\product-item.tsx" há algumas dicas sobre como fazer com que uma imagem ocupe 100% da largura
