@@ -8,14 +8,14 @@ import { cartItemTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 
 import {
-  RemoveProductFromCartSchema,
-  removeProductFromCartSchema,
+  DecreaseCartProductQuantitySchema,
+  decreaseCartProductQuantitySchema,
 } from "./schema";
 
-export const removeProductFromCart = async (
-  data: RemoveProductFromCartSchema,
+export const decreaseCartProductQuantity = async (
+  data: DecreaseCartProductQuantitySchema,
 ) => {
-  removeProductFromCartSchema.parse(data); // se os tipos dos valores de data estiverem errados, lança um erro
+  decreaseCartProductQuantitySchema.parse(data); // se os tipos dos valores de data estiverem errados, lança um erro
 
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -44,5 +44,15 @@ export const removeProductFromCart = async (
     throw new Error("Unauthorized");
   }
 
-  await db.delete(cartItemTable).where(eq(cartItemTable.id, cartItem.id));
+  // se a quantidade for 1, remove o item do carrinho
+  if (cartItem.quantity === 1) {
+    await db.delete(cartItemTable).where(eq(cartItemTable.id, cartItem.id));
+    return;
+  }
+
+  // se a quantidade for maior que 1, diminui a quantidade em 1
+  await db
+    .update(cartItemTable)
+    .set({ quantity: cartItem.quantity - 1 })
+    .where(eq(cartItemTable.id, cartItem.id));
 };
