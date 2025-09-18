@@ -3,6 +3,7 @@ import { MinusIcon, PlusIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
 
+import { addProductCart } from "@/actions/add-cart-product";
 import { decreaseCartProductQuantity } from "@/actions/decrease-cart-product-quantity";
 import { removeProductFromCart } from "@/actions/remove-cart-product";
 import { formatCentsToBRL } from "@/helpers/money";
@@ -12,6 +13,7 @@ import { Button } from "../ui/button";
 interface CartItemProps {
   id: string;
   productName: string;
+  productVariantId: string;
   productVariantName: string;
   productVariantImageUrl: string;
   productVariantPriceInCents: number;
@@ -21,6 +23,7 @@ interface CartItemProps {
 export function CartItem({
   id,
   productName,
+  productVariantId,
   productVariantImageUrl,
   productVariantName,
   productVariantPriceInCents,
@@ -44,6 +47,15 @@ export function CartItem({
     },
   });
 
+  const increaseCartProductQuantityMutation = useMutation({
+    mutationKey: ["increase-cart-product-quantity"],
+    mutationFn: () =>
+      addProductCart({ productVariantId: productVariantId, quantity: 1 }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+
   const handleDeleteClick = () => {
     removeProductFromCartMutation.mutate(undefined, {
       onSuccess: () => {
@@ -59,6 +71,14 @@ export function CartItem({
     decreaseCartProductQuantityMutation.mutate(undefined, {
       onError: () => {
         toast.error("Erro ao diminuir quantidade do produto");
+      },
+    });
+  };
+
+  const handleIncreaseQuantityClick = () => {
+    increaseCartProductQuantityMutation.mutate(undefined, {
+      onError: () => {
+        toast.error("Erro ao aumentar quantidade do produto");
       },
     });
   };
@@ -90,7 +110,11 @@ export function CartItem({
 
             <p className="text-xs font-medium">{quantity}</p>
 
-            <Button className="size-4" variant="ghost">
+            <Button
+              className="size-4"
+              variant="ghost"
+              onClick={handleIncreaseQuantityClick}
+            >
               <PlusIcon />
             </Button>
           </div>
